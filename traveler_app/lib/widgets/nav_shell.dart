@@ -38,7 +38,7 @@ class _NavShellState extends State<NavShell> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.ink,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, -6))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, -6))],
         ),
         padding: const EdgeInsets.only(top: 10, bottom: 14),
         child: SafeArea(
@@ -55,7 +55,7 @@ class _NavShellState extends State<NavShell> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: active ? AppColors.gold.withOpacity(0.16) : Colors.transparent,
+                    color: active ? AppColors.gold.withValues(alpha: 0.16) : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/experience.dart';
-import '../widgets/common.dart';
 import 'confirmed_screen.dart';
 
 /// "Waiting for confirmation…" — simulated mobile-money/card processing
@@ -52,7 +51,7 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen> {
             Container(
               width: 84,
               height: 84,
-              decoration: BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
               child: const Padding(
                 padding: EdgeInsets.all(22),
                 child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.gold),

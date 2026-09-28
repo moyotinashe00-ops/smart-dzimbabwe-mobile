@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
+import '../models/experience.dart';
+import '../services/api_service.dart';
 import '../widgets/common.dart';
 
 /// "Record your experience" — voice-note style feedback capture, no
-/// account needed. Hook the mic button up to real audio capture later.
+/// account needed.
 class RecordExperienceScreen extends StatefulWidget {
   const RecordExperienceScreen({super.key});
 
@@ -14,10 +15,25 @@ class RecordExperienceScreen extends StatefulWidget {
 
 class _RecordExperienceScreenState extends State<RecordExperienceScreen> {
   bool _recording = false;
+  List<Booking> _pastTrips = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPastTrips();
+  }
+
+  Future<void> _fetchPastTrips() async {
+    final trips = await ApiService.getPastTrips();
+    if (mounted) {
+      setState(() {
+        _pastTrips = trips;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final trips = MockData.pastTrips();
     return Scaffold(
       backgroundColor: AppColors.ink,
       body: SafeArea(
@@ -45,7 +61,7 @@ class _RecordExperienceScreenState extends State<RecordExperienceScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                        color: (_recording ? AppColors.danger : AppColors.gold).withOpacity(0.35),
+                        color: (_recording ? AppColors.danger : AppColors.gold).withValues(alpha: 0.35),
                         blurRadius: 30,
                         spreadRadius: 4),
                   ],
@@ -57,9 +73,9 @@ class _RecordExperienceScreenState extends State<RecordExperienceScreen> {
             Text(_recording ? 'Recording… tap to stop' : 'Tap to start recording',
                 style: AppTheme.onDarkTextTheme.bodySmall),
             const Spacer(),
-            if (trips.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+            if (_pastTrips.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: SectionHeading(title: 'From your past trips', color: AppColors.textOnDark),
               ),
               const SizedBox(height: 10),
@@ -68,11 +84,11 @@ class _RecordExperienceScreenState extends State<RecordExperienceScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: trips.length,
+                  itemCount: _pastTrips.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (_, i) => SizedBox(
                     width: 92,
-                    child: PhotoBlock(photo: trips[i].experience.photo, height: 92, radius: BorderRadius.circular(16)),
+                    child: PhotoBlock(photo: _pastTrips[i].experience.photo, height: 92, radius: BorderRadius.circular(16)),
                   ),
                 ),
               ),

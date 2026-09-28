@@ -1,57 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
 import '../models/experience.dart';
+import '../services/api_service.dart';
 import '../widgets/common.dart';
 import 'receipt_screen.dart';
 
-class UpcomingTripsScreen extends StatelessWidget {
+class UpcomingTripsScreen extends StatefulWidget {
   const UpcomingTripsScreen({super.key});
 
   @override
+  State<UpcomingTripsScreen> createState() => _UpcomingTripsScreenState();
+}
+
+class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
+  List<Booking> _upcoming = [];
+  List<Booking> _past = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTrips();
+  }
+
+  Future<void> _fetchTrips() async {
+    setState(() => _loading = true);
+    final upcomingData = await ApiService.getUpcomingTrips();
+    final pastData = await ApiService.getPastTrips();
+    if (mounted) {
+      setState(() {
+        _upcoming = upcomingData;
+        _past = pastData;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final upcoming = MockData.upcomingTrips();
-    final past = MockData.pastTrips();
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.cream,
-        body: NestedScrollView(
-          headerSliverBuilder: (context, _) => [
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.ink,
-                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+            : NestedScrollView(
+                headerSliverBuilder: (context, _) => [
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                      child: Text('Your trips', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.textOnDark)),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+                      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16)),
+                      child: TabBar(
+                        indicator: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(16)),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        labelColor: AppColors.textOnDark,
+                        unselectedLabelColor: AppColors.textOnLightMuted,
+                        labelStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13),
+                        tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
+                      ),
+                    ),
+                  ),
+                ],
+                body: TabBarView(
+                  children: [
+                    _TripList(bookings: _upcoming, emptyText: 'No upcoming trips yet — go find one you love.'),
+                    _TripList(bookings: _past, emptyText: 'Your completed trips will show up here.'),
+                  ],
                 ),
-                padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                child: Text('Your trips', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.textOnDark)),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(20, 16, 20, 6),
-                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16)),
-                child: TabBar(
-                  indicator: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(16)),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: AppColors.textOnDark,
-                  unselectedLabelColor: AppColors.textOnLightMuted,
-                  labelStyle: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13),
-                  tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
-                ),
-              ),
-            ),
-          ],
-          body: TabBarView(
-            children: [
-              _TripList(bookings: upcoming, emptyText: 'No upcoming trips yet — go find one you love.'),
-              _TripList(bookings: past, emptyText: 'Your completed trips will show up here.'),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -79,9 +107,9 @@ class _TripList extends StatelessWidget {
       itemBuilder: (_, i) {
         final b = bookings[i];
         final statusColors = switch (b.status) {
-          BookingStatus.confirmed => (AppColors.success.withOpacity(0.15), AppColors.success),
-          BookingStatus.pending => (AppColors.gold.withOpacity(0.18), AppColors.goldDeep),
-          BookingStatus.completed => (AppColors.line.withOpacity(0.5), AppColors.textOnLightMuted),
+          BookingStatus.confirmed => (AppColors.success.withValues(alpha: 0.15), AppColors.success),
+          BookingStatus.pending => (AppColors.gold.withValues(alpha: 0.18), AppColors.goldDeep),
+          BookingStatus.completed => (AppColors.line.withValues(alpha: 0.5), AppColors.textOnLightMuted),
         };
         return SmartCard(
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReceiptScreen(booking: b))),

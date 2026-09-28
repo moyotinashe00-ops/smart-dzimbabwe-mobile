@@ -33,7 +33,7 @@ class ConfirmedScreen extends StatelessWidget {
               Container(
                 width: 78,
                 height: 78,
-                decoration: BoxDecoration(color: AppColors.success.withOpacity(0.15), shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.15), shape: BoxShape.circle),
                 child: const Icon(Icons.check_rounded, color: AppColors.success, size: 40),
               ),
               const SizedBox(height: 20),

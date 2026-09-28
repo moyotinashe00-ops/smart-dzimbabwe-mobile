@@ -123,7 +123,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             decoration: BoxDecoration(
               color: AppColors.card,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, -4))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, -4))],
             ),
             child: Row(children: [
               Expanded(
@@ -185,7 +185,7 @@ class _PayTile extends StatelessWidget {
             height: 44,
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: selected ? AppColors.gold.withOpacity(0.18) : AppColors.cream,
+              color: selected ? AppColors.gold.withValues(alpha: 0.18) : AppColors.cream,
               shape: BoxShape.circle,
             ),
             child: assetIconPath != null

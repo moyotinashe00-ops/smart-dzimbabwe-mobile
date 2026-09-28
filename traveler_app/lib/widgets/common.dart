@@ -103,7 +103,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: loading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.gold,
-        disabledBackgroundColor: AppColors.gold.withOpacity(0.6),
+        disabledBackgroundColor: AppColors.gold.withValues(alpha: 0.6),
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -173,7 +173,7 @@ class SmartCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.line.withOpacity(0.7)),
+            border: Border.all(color: AppColors.line.withValues(alpha: 0.7)),
           ),
           child: child,
         ),
@@ -226,14 +226,14 @@ class RatingBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
+        const Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
         const SizedBox(width: 3),
         Text(rating.toStringAsFixed(1),
             style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12.5, fontFamily: 'Manrope')),
         if (reviews != null) ...[
           const SizedBox(width: 3),
           Text('($reviews)',
-              style: TextStyle(color: color.withOpacity(0.6), fontSize: 12, fontFamily: 'Manrope')),
+              style: TextStyle(color: color.withValues(alpha: 0.6), fontSize: 12, fontFamily: 'Manrope')),
         ],
       ],
     );
@@ -271,7 +271,7 @@ class PhotoBlock extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Opacity(opacity: 0.16, child: Icon(photo.icon, size: (height ?? 160) * 0.8, color: Colors.white)),
-            Icon(photo.icon, size: 30, color: Colors.white.withOpacity(0.85)),
+            Icon(photo.icon, size: 30, color: Colors.white.withValues(alpha: 0.85)),
           ],
         ),
       ),

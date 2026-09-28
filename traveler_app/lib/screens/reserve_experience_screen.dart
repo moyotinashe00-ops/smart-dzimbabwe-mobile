@@ -81,7 +81,7 @@ class _ReserveExperienceScreenState extends State<ReserveExperienceScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             decoration: BoxDecoration(
               color: AppColors.card,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, -4))],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, -4))],
             ),
             child: Row(children: [
               Expanded(

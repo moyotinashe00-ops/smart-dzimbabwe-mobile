@@ -29,7 +29,7 @@ class _ReservationDatesScreenState extends State<ReservationDatesScreen> {
     final total = widget.experience.pricePerPerson * _guests;
     return Scaffold(
       backgroundColor: AppColors.cream,
-      appBar: _AppBarLight(title: 'When and how many?'),
+      appBar: const _AppBarLight(title: 'When and how many?'),
       body: Column(
         children: [
           Expanded(
@@ -78,7 +78,7 @@ class _ReservationDatesScreenState extends State<ReservationDatesScreen> {
                               child: Text('${d.day}',
                                   style: TextStyle(
                                     color: past
-                                        ? AppColors.textOnLightMuted.withOpacity(0.35)
+                                        ? AppColors.textOnLightMuted.withValues(alpha: 0.35)
                                         : selected
                                             ? AppColors.textOnDark
                                             : AppColors.textOnLight,
@@ -134,7 +134,7 @@ class _ReservationDatesScreenState extends State<ReservationDatesScreen> {
         child: Container(
           width: 30,
           height: 30,
-          decoration: BoxDecoration(color: AppColors.cream, shape: BoxShape.circle),
+          decoration: const BoxDecoration(color: AppColors.cream, shape: BoxShape.circle),
           child: Icon(icon, size: 18, color: AppColors.textOnLight),
         ),
       );
@@ -177,7 +177,7 @@ class _SummaryBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
       decoration: BoxDecoration(
         color: AppColors.card,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 16, offset: const Offset(0, -4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 16, offset: const Offset(0, -4))],
       ),
       child: Row(
         children: [
