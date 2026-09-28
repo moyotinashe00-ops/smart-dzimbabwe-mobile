@@ -36,21 +36,13 @@ class RoleSelectScreen extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _RoleCard(
-                title: 'Traveler account',
-                subtitle: 'Not needed — travelers browse without signing in',
-                icon: Icons.hiking_rounded,
-                disabled: true,
-                onTap: null,
+                title: 'Platform administration',
+                subtitle: 'Manage operators, platform settlements & approvals',
+                icon: Icons.admin_panel_settings_rounded,
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const LoginScreen(role: UserRole.admin))),
               ),
               const Spacer(),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => const LoginScreen(role: UserRole.admin))),
-                  child: Text('Sign in as platform admin',
-                      style: TextStyle(color: AppColors.textOnDarkMuted, fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 12.5)),
-                ),
-              ),
             ],
           ),
         ),
@@ -63,39 +55,35 @@ class _RoleCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final VoidCallback? onTap;
-  final bool disabled;
-  const _RoleCard({required this.title, required this.subtitle, required this.icon, required this.onTap, this.disabled = false});
+  final VoidCallback onTap;
+  const _RoleCard({required this.title, required this.subtitle, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: disabled ? 0.45 : 1,
-      child: SmartCard(
-        color: AppColors.inkPanel,
-        borderColor: AppColors.lineOnDark,
-        onTap: onTap,
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.16), shape: BoxShape.circle),
-              child: Icon(icon, color: AppColors.gold, size: 22),
+    return SmartCard(
+      color: AppColors.inkPanel,
+      borderColor: AppColors.lineOnDark,
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.16), shape: BoxShape.circle),
+            child: Icon(icon, color: AppColors.gold, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTheme.onDarkTextTheme.titleLarge),
+                Text(subtitle, style: AppTheme.onDarkTextTheme.bodySmall),
+              ],
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTheme.onDarkTextTheme.titleLarge),
-                  Text(subtitle, style: AppTheme.onDarkTextTheme.bodySmall),
-                ],
-              ),
-            ),
-            if (!disabled) const Icon(Icons.arrow_forward_ios_rounded, size: 15, color: AppColors.textOnDarkMuted),
-          ],
-        ),
+          ),
+          const Icon(Icons.arrow_forward_ios_rounded, size: 15, color: AppColors.textOnDarkMuted),
+        ],
       ),
     );
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
 import '../widgets/common.dart';
 
 class BookingsManagementScreen extends StatefulWidget {
@@ -17,9 +17,29 @@ class _BookingsManagementScreenState extends State<BookingsManagementScreen> {
   String _filter = 'All';
   final _filters = const ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
+  List<OperatorBooking> _allBookings = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBookings();
+  }
+
+  Future<void> _fetchBookings() async {
+    setState(() => _loading = true);
+    final data = await ApiService.getBookings();
+    if (mounted) {
+      setState(() {
+        _allBookings = data;
+        _loading = false;
+      });
+    }
+  }
+
   List<OperatorBooking> get _filtered {
-    if (_filter == 'All') return MockData.bookings;
-    return MockData.bookings.where((b) => b.status.name.toLowerCase() == _filter.toLowerCase()).toList();
+    if (_filter == 'All') return _allBookings;
+    return _allBookings.where((b) => b.status.name.toLowerCase() == _filter.toLowerCase()).toList();
   }
 
   @override
@@ -72,54 +92,68 @@ class _BookingsManagementScreenState extends State<BookingsManagementScreen> {
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
-            sliver: SliverList.separated(
-              itemCount: _filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) {
-                final b = _filtered[i];
-                final colors = switch (b.status) {
-                  BookingStatus.confirmed => (AppColors.success.withOpacity(0.15), AppColors.success),
-                  BookingStatus.pending => (AppColors.gold.withOpacity(0.18), AppColors.goldDeep),
-                  BookingStatus.completed => (AppColors.line.withOpacity(0.5), AppColors.textOnLightMuted),
-                  BookingStatus.cancelled => (AppColors.danger.withOpacity(0.14), AppColors.danger),
-                };
-                return SmartCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(child: Text(b.listingTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium)),
-                          StatusPill(label: b.status.name[0].toUpperCase() + b.status.name.substring(1), bg: colors.$1, fg: colors.$2),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(children: [
-                        const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textOnLightMuted),
-                        const SizedBox(width: 4),
-                        Text(b.guestName, style: Theme.of(context).textTheme.bodyMedium),
-                        const SizedBox(width: 14),
-                        const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textOnLightMuted),
-                        const SizedBox(width: 4),
-                        Text(DateFormat('MMM d').format(b.date), style: Theme.of(context).textTheme.bodyMedium),
-                      ]),
-                      const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${b.guests} guest${b.guests > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),
-                          Text('\$${b.amount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleMedium),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+          if (_loading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+            )
+          else if (_filtered.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text('No bookings found.', style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
+              sliver: SliverList.separated(
+                itemCount: _filtered.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) {
+                  final b = _filtered[i];
+                  final colors = switch (b.status) {
+                    BookingStatus.confirmed => (AppColors.success.withValues(alpha: 0.15), AppColors.success),
+                    BookingStatus.pending => (AppColors.gold.withValues(alpha: 0.18), AppColors.goldDeep),
+                    BookingStatus.completed => (AppColors.line.withValues(alpha: 0.5), AppColors.textOnLightMuted),
+                    BookingStatus.cancelled => (AppColors.danger.withValues(alpha: 0.14), AppColors.danger),
+                  };
+                  return SmartCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: Text(b.listingTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium)),
+                            StatusPill(label: b.status.name[0].toUpperCase() + b.status.name.substring(1), bg: colors.$1, fg: colors.$2),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.textOnLightMuted),
+                          const SizedBox(width: 4),
+                          Text(b.guestName, style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(width: 14),
+                          const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textOnLightMuted),
+                          const SizedBox(width: 4),
+                          Text(DateFormat('MMM d').format(b.date), style: Theme.of(context).textTheme.bodyMedium),
+                        ]),
+                        const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('${b.guests} guest${b.guests > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),
+                            Text('\$${b.amount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleMedium),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );

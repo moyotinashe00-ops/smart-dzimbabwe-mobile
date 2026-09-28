@@ -78,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Row(
       children: [
         Expanded(child: Text(label, style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 14))),
-        Switch(value: value, activeColor: AppColors.gold, onChanged: onChanged),
+        Switch(value: value, activeThumbColor: AppColors.gold, onChanged: onChanged),
       ],
     );
   }

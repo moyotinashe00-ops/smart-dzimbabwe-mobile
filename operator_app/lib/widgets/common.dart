@@ -87,7 +87,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: loading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.gold,
-        disabledBackgroundColor: AppColors.gold.withOpacity(0.6),
+        disabledBackgroundColor: AppColors.gold.withValues(alpha: 0.6),
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -150,7 +150,7 @@ class SmartCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor.withOpacity(0.7)),
+            border: Border.all(color: borderColor.withValues(alpha: 0.7)),
           ),
           child: child,
         ),
@@ -176,7 +176,7 @@ class PhotoBlock extends StatelessWidget {
         ),
         child: Stack(alignment: Alignment.center, children: [
           Opacity(opacity: 0.16, child: Icon(photo.icon, size: (height ?? 140) * 0.8, color: Colors.white)),
-          Icon(photo.icon, size: 26, color: Colors.white.withOpacity(0.85)),
+          Icon(photo.icon, size: 26, color: Colors.white.withValues(alpha: 0.85)),
         ]),
       ),
     );
@@ -242,7 +242,7 @@ class StatTile extends StatelessWidget {
           Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(color: accent.withOpacity(0.18), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: accent.withValues(alpha: 0.18), shape: BoxShape.circle),
             child: Icon(icon, size: 16, color: accent),
           ),
           const SizedBox(height: 10),

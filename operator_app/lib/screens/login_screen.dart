@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {},
-                        child: Text('Forgot password?',
+                        child: const Text('Forgot password?',
                             style: TextStyle(color: AppColors.gold, fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 12.5)),
                       ),
                     ),
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text("New operator? ", style: AppTheme.onDarkTextTheme.bodyMedium),
                     GestureDetector(
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                      child: Text('Register your business',
+                      child: const Text('Register your business',
                           style: TextStyle(color: AppColors.gold, fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 13.5)),
                     ),
                   ]),

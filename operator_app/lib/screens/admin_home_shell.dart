@@ -41,7 +41,7 @@ class _AdminHomeShellState extends State<AdminHomeShell> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.ink,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, -6))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 24, offset: const Offset(0, -6))],
         ),
         padding: const EdgeInsets.only(top: 8, bottom: 12),
         child: SafeArea(
@@ -58,7 +58,7 @@ class _AdminHomeShellState extends State<AdminHomeShell> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
-                    color: active ? AppColors.gold.withOpacity(0.16) : Colors.transparent,
+                    color: active ? AppColors.gold.withValues(alpha: 0.16) : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(

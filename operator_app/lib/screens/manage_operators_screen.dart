@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
 import '../widgets/common.dart';
 
 class ManageOperatorsScreen extends StatefulWidget {
@@ -12,20 +12,44 @@ class ManageOperatorsScreen extends StatefulWidget {
 }
 
 class _ManageOperatorsScreenState extends State<ManageOperatorsScreen> {
-  void _togglePause(PlatformOperator op) {
-    setState(() {
-      op.isPaused = !op.isPaused;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(op.isPaused ? 'Paused ${op.businessName}' : 'Resumed ${op.businessName}', style: const TextStyle(fontFamily: 'Manrope')),
-        backgroundColor: AppColors.ink,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  List<PlatformOperator> _operators = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOperators();
   }
 
-  void _deleteOperator(PlatformOperator op) {
+  Future<void> _fetchOperators() async {
+    setState(() => _loading = true);
+    final data = await ApiService.getOperators();
+    if (mounted) {
+      setState(() {
+        _operators = data;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _togglePause(PlatformOperator op) async {
+    final newStatus = !op.isPaused;
+    await ApiService.togglePauseOperator(op.id, newStatus);
+    setState(() {
+      op.isPaused = newStatus;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(op.isPaused ? 'Paused ${op.businessName}' : 'Resumed ${op.businessName}', style: const TextStyle(fontFamily: 'Manrope')),
+          backgroundColor: AppColors.ink,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteOperator(PlatformOperator op) async {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -41,17 +65,20 @@ class _ManageOperatorsScreenState extends State<ManageOperatorsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              await ApiService.deleteOperator(op.id);
               setState(() {
-                MockData.operators.removeWhere((o) => o.id == op.id);
+                _operators.removeWhere((o) => o.id == op.id);
               });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Removed ${op.businessName} from platform', style: const TextStyle(fontFamily: 'Manrope')),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Removed ${op.businessName} from platform', style: const TextStyle(fontFamily: 'Manrope')),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              }
             },
             child: const Text('Remove', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
           ),
@@ -100,21 +127,25 @@ class _ManageOperatorsScreenState extends State<ManageOperatorsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: AppColors.ink),
-            onPressed: () {
+            onPressed: () async {
               if (businessController.text.trim().isEmpty) return;
               Navigator.pop(ctx);
-              setState(() {
-                MockData.operators.add(PlatformOperator(
-                  id: 'op-${DateTime.now().millisecondsSinceEpoch}',
-                  businessName: businessController.text.trim(),
-                  ownerName: ownerController.text.isEmpty ? 'Partner' : ownerController.text.trim(),
-                  email: emailController.text.isEmpty ? 'partner@smartdzimbabwe.co.zw' : emailController.text.trim(),
-                  listingsCount: 1,
-                ));
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Operator added successfully', style: TextStyle(fontFamily: 'Manrope')), backgroundColor: AppColors.success),
+              final newOp = PlatformOperator(
+                id: 'op-${DateTime.now().millisecondsSinceEpoch}',
+                businessName: businessController.text.trim(),
+                ownerName: ownerController.text.isEmpty ? 'Partner' : ownerController.text.trim(),
+                email: emailController.text.isEmpty ? 'partner@smartdzimbabwe.co.zw' : emailController.text.trim(),
+                listingsCount: 1,
               );
+              await ApiService.registerOperator(newOp.toJson());
+              setState(() {
+                _operators.add(newOp);
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Operator added successfully', style: TextStyle(fontFamily: 'Manrope')), backgroundColor: AppColors.success),
+                );
+              }
             },
             child: const Text('Add operator', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
           ),
@@ -140,74 +171,76 @@ class _ManageOperatorsScreenState extends State<ManageOperatorsScreen> {
         label: const Text('Add operator', style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w700)),
         icon: const Icon(Icons.add_rounded),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        children: [
-          Text('${MockData.operators.length} registered partners on platform', style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 16),
-          if (MockData.operators.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Text('No operators found.', style: Theme.of(context).textTheme.bodyMedium),
-              ),
-            ),
-          ...MockData.operators.map((op) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: SmartCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(op.businessName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
-                          ),
-                          StatusPill(
-                            label: op.isPaused ? 'Paused' : 'Active',
-                            bg: op.isPaused ? AppColors.gold.withOpacity(0.18) : AppColors.success.withOpacity(0.15),
-                            fg: op.isPaused ? AppColors.goldDeep : AppColors.success,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text('Owner: ${op.ownerName} · ${op.email}', style: Theme.of(context).textTheme.bodySmall),
-                      const SizedBox(height: 6),
-                      Text('${op.listingsCount} active listings', style: const TextStyle(color: AppColors.textOnLightMuted, fontSize: 12, fontFamily: 'Manrope')),
-                      const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: () => _togglePause(op),
-                            icon: Icon(op.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded, size: 16),
-                            label: Text(op.isPaused ? 'Resume' : 'Pause', style: const TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.w700)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: op.isPaused ? AppColors.success : AppColors.goldDeep,
-                              side: BorderSide(color: op.isPaused ? AppColors.success : AppColors.gold),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          OutlinedButton.icon(
-                            onPressed: () => _deleteOperator(op),
-                            icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                            label: const Text('Remove', style: TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.w700)),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.danger,
-                              side: const BorderSide(color: AppColors.danger),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              children: [
+                Text('${_operators.length} registered partners on platform', style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 16),
+                if (_operators.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Text('No operators found from backend.', style: Theme.of(context).textTheme.bodyMedium),
+                    ),
                   ),
-                ),
-              )),
-        ],
-      ),
+                ..._operators.map((op) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: SmartCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(op.businessName, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
+                                ),
+                                StatusPill(
+                                  label: op.isPaused ? 'Paused' : 'Active',
+                                  bg: op.isPaused ? AppColors.gold.withValues(alpha: 0.18) : AppColors.success.withValues(alpha: 0.15),
+                                  fg: op.isPaused ? AppColors.goldDeep : AppColors.success,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text('Owner: ${op.ownerName} · ${op.email}', style: Theme.of(context).textTheme.bodySmall),
+                            const SizedBox(height: 6),
+                            Text('${op.listingsCount} active listings', style: const TextStyle(color: AppColors.textOnLightMuted, fontSize: 12, fontFamily: 'Manrope')),
+                            const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: () => _togglePause(op),
+                                  icon: Icon(op.isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded, size: 16),
+                                  label: Text(op.isPaused ? 'Resume' : 'Pause', style: const TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.w700)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: op.isPaused ? AppColors.success : AppColors.goldDeep,
+                                    side: BorderSide(color: op.isPaused ? AppColors.success : AppColors.gold),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                OutlinedButton.icon(
+                                  onPressed: () => _deleteOperator(op),
+                                  icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                                  label: const Text('Remove', style: TextStyle(fontFamily: 'Manrope', fontSize: 12, fontWeight: FontWeight.w700)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.danger,
+                                    side: const BorderSide(color: AppColors.danger),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    )),
+              ],
+            ),
     );
   }
 }

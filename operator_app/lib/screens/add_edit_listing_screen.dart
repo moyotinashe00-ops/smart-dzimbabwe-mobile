@@ -104,7 +104,7 @@ class _AddEditListingScreenState extends State<AddEditListingScreen> {
                     ],
                   ),
                 ),
-                Switch(value: _published, activeColor: AppColors.gold, onChanged: (v) => setState(() => _published = v)),
+                Switch(value: _published, activeThumbColor: AppColors.gold, onChanged: (v) => setState(() => _published = v)),
               ],
             ),
           ),

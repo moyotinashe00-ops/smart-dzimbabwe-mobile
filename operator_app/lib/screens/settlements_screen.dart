@@ -1,15 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
+import '../models/models.dart';
+import '../services/api_service.dart';
 import '../widgets/common.dart';
 
-class SettlementsScreen extends StatelessWidget {
+class SettlementsScreen extends StatefulWidget {
   const SettlementsScreen({super.key});
 
   @override
+  State<SettlementsScreen> createState() => _SettlementsScreenState();
+}
+
+class _SettlementsScreenState extends State<SettlementsScreen> {
+  List<SettlementBatch> _settlements = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSettlements();
+  }
+
+  Future<void> _fetchSettlements() async {
+    setState(() => _loading = true);
+    final data = await ApiService.getSettlements();
+    if (mounted) {
+      setState(() {
+        _settlements = data;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final total = MockData.settlements.fold<double>(0, (sum, s) => sum + s.amount);
+    final total = _settlements.fold<double>(0, (sum, s) => sum + s.amount);
     return Scaffold(
       backgroundColor: AppColors.cream,
       body: CustomScrollView(
@@ -28,52 +54,66 @@ class SettlementsScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text('Every payout batch, tracked end to end.', style: AppTheme.onDarkTextTheme.bodyMedium),
                   const SizedBox(height: 16),
-                  StatTile(value: '\$${total.toStringAsFixed(2)}', label: 'Across ${MockData.settlements.length} batches', icon: Icons.account_balance_wallet_rounded),
+                  StatTile(value: '\$${total.toStringAsFixed(2)}', label: 'Across ${_settlements.length} batches', icon: Icons.account_balance_wallet_rounded),
                 ],
               ),
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
-            sliver: SliverList.separated(
-              itemCount: MockData.settlements.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) {
-                final s = MockData.settlements[i];
-                final isPaid = s.status == 'Paid out';
-                return SmartCard(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(color: isPaid ? AppColors.success.withOpacity(0.14) : AppColors.gold.withOpacity(0.16), shape: BoxShape.circle),
-                        child: Icon(isPaid ? Icons.check_circle_outline_rounded : Icons.schedule_rounded,
-                            color: isPaid ? AppColors.success : AppColors.goldDeep, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          if (_loading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+            )
+          else if (_settlements.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text('No settlement batches found from backend.', style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+              sliver: SliverList.separated(
+                itemCount: _settlements.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) {
+                  final s = _settlements[i];
+                  final isPaid = s.status == 'Paid out';
+                  return SmartCard(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(color: isPaid ? AppColors.success.withValues(alpha: 0.14) : AppColors.gold.withValues(alpha: 0.16), shape: BoxShape.circle),
+                          child: Icon(isPaid ? Icons.check_circle_outline_rounded : Icons.schedule_rounded,
+                              color: isPaid ? AppColors.success : AppColors.goldDeep, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Batch ${s.id}', style: Theme.of(context).textTheme.titleMedium),
+                              Text('${DateFormat('MMM d, yyyy').format(s.date)} · ${s.bookingsCount} bookings', style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('Batch ${s.id}', style: Theme.of(context).textTheme.titleMedium),
-                            Text('${DateFormat('MMM d, yyyy').format(s.date)} · ${s.bookingsCount} bookings', style: Theme.of(context).textTheme.bodySmall),
+                            Text('\$${s.amount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleMedium),
+                            Text(s.status, style: TextStyle(color: isPaid ? AppColors.success : AppColors.goldDeep, fontSize: 11.5, fontWeight: FontWeight.w700, fontFamily: 'Manrope')),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('\$${s.amount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleMedium),
-                          Text(s.status, style: TextStyle(color: isPaid ? AppColors.success : AppColors.goldDeep, fontSize: 11.5, fontWeight: FontWeight.w700, fontFamily: 'Manrope')),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );

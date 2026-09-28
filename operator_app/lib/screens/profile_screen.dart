@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../data/mock_data.dart';
 import '../widgets/common.dart';
 import 'settings_screen.dart';
 import 'settlements_screen.dart';
 import 'analytics_screen.dart';
+import 'national_tourism_intelligence_screen.dart';
+import 'system_status_screen.dart';
 import 'role_select_screen.dart';
 import 'manage_operators_screen.dart';
 import 'listing_approvals_screen.dart';
@@ -19,9 +20,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _businessName = 'Zambezi Waters';
+  String _ownerName = 'Aaron Mashingaidze';
+
   void _editBusinessDialog() {
-    final businessController = TextEditingController(text: MockData.businessName);
-    final ownerController = TextEditingController(text: MockData.ownerName);
+    final businessController = TextEditingController(text: _businessName);
+    final ownerController = TextEditingController(text: _ownerName);
 
     showDialog(
       context: context,
@@ -47,7 +51,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               setState(() {
-                // In mock data update
+                if (businessController.text.isNotEmpty) _businessName = businessController.text.trim();
+                if (ownerController.text.isNotEmpty) _ownerName = ownerController.text.trim();
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Business details updated successfully', style: TextStyle(fontFamily: 'Manrope')), backgroundColor: AppColors.success),
@@ -101,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(widget.isAdmin ? 'Admin profile' : 'Business profile', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppColors.textOnDark)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.18), borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(20)),
                       child: const Text('Verified', style: TextStyle(color: AppColors.gold, fontFamily: 'Manrope', fontWeight: FontWeight.w700, fontSize: 11)),
                     ),
                   ],
@@ -113,8 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Icon(widget.isAdmin ? Icons.admin_panel_settings_rounded : Icons.storefront_rounded, color: AppColors.gold, size: 32),
                 ),
                 const SizedBox(height: 12),
-                Text(widget.isAdmin ? MockData.ownerName : MockData.businessName, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textOnDark)),
-                Text(widget.isAdmin ? 'Platform administrator' : 'Operator · ${MockData.ownerName}', style: AppTheme.onDarkTextTheme.bodySmall),
+                Text(widget.isAdmin ? _ownerName : _businessName, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textOnDark)),
+                Text(widget.isAdmin ? 'Platform administrator' : 'Operator · $_ownerName', style: AppTheme.onDarkTextTheme.bodySmall),
               ],
             ),
           ),
@@ -127,9 +132,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _tile(context, icon: Icons.photo_library_outlined, title: 'My listings', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ListingsManagementScreen(isAdmin: false)))),
                   _tile(context, icon: Icons.account_balance_wallet_outlined, title: 'Settlements', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettlementsScreen()))),
                 ] else ...[
-                  _tile(context, icon: Icons.insights_outlined, title: 'National tourism intelligence', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AnalyticsScreen()))),
+                  _tile(context, icon: Icons.map_outlined, title: 'National tourism intelligence', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NationalTourismIntelligenceScreen()))),
+                  _tile(context, icon: Icons.insights_outlined, title: 'Analytics', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AnalyticsScreen()))),
                   _tile(context, icon: Icons.groups_outlined, title: 'Manage operators', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageOperatorsScreen()))),
                   _tile(context, icon: Icons.rule_folder_outlined, title: 'Listing approvals', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ListingApprovalsScreen()))),
+                  _tile(context, icon: Icons.dns_outlined, title: 'System status', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SystemStatusScreen()))),
                 ],
                 _tile(context, icon: Icons.settings_outlined, title: 'Settings', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()))),
                 _tile(context, icon: Icons.help_outline_rounded, title: 'Help & support', onTap: _helpSupportDialog),
