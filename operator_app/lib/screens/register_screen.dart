@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/common.dart';
 import 'login_screen.dart';
 
-/// 2-Step Business Registration & Voice Experience Recording for operators.
-/// Fully aligned with the Smart Dzimbabwe onboarding design system.
+/// 3-Step Business Registration & Voice Experience Recording for operators,
+/// including optional photos and videos upload before publishing storefront.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -14,7 +16,7 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-enum _Step { step1Contact, step2VoiceRecord }
+enum _Step { step1Contact, step2VoiceRecord, step3MediaUpload }
 enum _RecordState { idle, recording, completed, transcribing, storefrontGenerated }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -38,6 +40,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   int _recordSeconds = 0;
   Timer? _timer;
   int _transcribeStep = 0;
+
+  // Step 3 Media Upload States
+  final ImagePicker _imagePicker = ImagePicker();
+  final List<ServiceMedia> _serviceMedia = [];
+  bool _isUploadingMedia = false;
 
   void _startRecording() {
     setState(() {
@@ -79,6 +86,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  Future<void> _pickImages() async {
+    final List<XFile> images = await _imagePicker.pickMultiImage();
+    if (images.isEmpty) return;
+
+    setState(() {
+      _isUploadingMedia = true;
+    });
+
+    for (var image in images) {
+      final media = ServiceMedia(
+        id: DateTime.now().millisecondsSinceEpoch.toString() + image.name,
+        type: 'image',
+        path: image.path,
+      );
+      _serviceMedia.add(media);
+    }
+
+    setState(() {
+      _isUploadingMedia = false;
+    });
+  }
+
+  Future<void> _pickVideo() async {
+    final XFile? video = await _imagePicker.pickVideo(source: ImageSource.gallery);
+    if (video == null) return;
+
+    setState(() {
+      _isUploadingMedia = true;
+    });
+
+    final media = ServiceMedia(
+      id: DateTime.now().millisecondsSinceEpoch.toString() + video.name,
+      type: 'video',
+      path: video.path,
+    );
+    _serviceMedia.add(media);
+
+    setState(() {
+      _isUploadingMedia = false;
+    });
+  }
+
+  void _removeMedia(int index) {
+    setState(() {
+      _serviceMedia.removeAt(index);
+    });
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -101,7 +156,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textOnDark, size: 18),
           onPressed: () {
-            if (_currentStep == _Step.step2VoiceRecord) {
+            if (_currentStep == _Step.step3MediaUpload) {
+              setState(() => _currentStep = _Step.step2VoiceRecord);
+            } else if (_currentStep == _Step.step2VoiceRecord) {
               setState(() => _currentStep = _Step.step1Contact);
             } else {
               Navigator.pop(context);
@@ -109,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         ),
         title: Text(
-          _currentStep == _Step.step2VoiceRecord ? 'Back to account details' : '',
+          _currentStep == _Step.step2VoiceRecord ? 'Back to account details' : _currentStep == _Step.step3MediaUpload ? 'Back to voice description' : '',
           style: const TextStyle(color: AppColors.textOnDarkMuted, fontSize: 13, fontFamily: 'Manrope'),
         ),
       ),
@@ -125,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     number: '1',
                     label: 'Contact & account',
                     active: _currentStep == _Step.step1Contact,
-                    completed: _currentStep == _Step.step2VoiceRecord,
+                    completed: _currentStep == _Step.step2VoiceRecord || _currentStep == _Step.step3MediaUpload,
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Container(height: 1, color: AppColors.lineOnDark)),
@@ -134,6 +191,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     number: '2',
                     label: 'Voice description',
                     active: _currentStep == _Step.step2VoiceRecord,
+                    completed: _currentStep == _Step.step3MediaUpload,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Container(height: 1, color: AppColors.lineOnDark)),
+                  const SizedBox(width: 12),
+                  _stepperBadge(
+                    number: '3',
+                    label: 'Add media',
+                    active: _currentStep == _Step.step3MediaUpload,
                     completed: false,
                   ),
                 ],
@@ -143,7 +209,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
                 children: [
-                  if (_currentStep == _Step.step1Contact) _buildStep1Contact() else _buildStep2VoiceRecord(),
+                  if (_currentStep == _Step.step1Contact) _buildStep1Contact()
+                  else if (_currentStep == _Step.step2VoiceRecord) _buildStep2VoiceRecord()
+                  else _buildStep3MediaUpload(),
                 ],
               ),
             ),
@@ -185,7 +253,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
-          child: const Text('STEP 1 OF 2', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          child: const Text('STEP 1 OF 3', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
         ),
         const SizedBox(height: 10),
         Text('Contact & account information', style: AppTheme.onDarkTextTheme.displayLarge),
@@ -305,7 +373,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
-          child: const Text('STEP 2 OF 2', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+          child: const Text('STEP 2 OF 3', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
         ),
         const SizedBox(height: 10),
         Text('Record your experience', style: AppTheme.onDarkTextTheme.displayLarge),
@@ -653,32 +721,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 24),
 
             PrimaryButton(
-              label: 'Approve & publish',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: AppColors.card,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    title: Text('Storefront published!', style: Theme.of(context).textTheme.headlineSmall),
-                    content: const Text(
-                      'Your listing is now live on Smart Dzimbabwe. Sign in to your operator dashboard to manage bookings.',
-                      style: TextStyle(fontFamily: 'Manrope', fontSize: 13.5),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const LoginScreen(role: UserRole.operator)),
-                          );
-                        },
-                        child: const Text('Back to sign in', style: TextStyle(color: AppColors.goldDeep, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              label: 'Proceed to Step 3: Add Media ->',
+              onPressed: () => setState(() => _currentStep = _Step.step3MediaUpload),
             ),
             const SizedBox(height: 12),
             GhostButton(
@@ -688,6 +732,160 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         );
     }
+  }
+
+  // --- STEP 3: Add Photos & Videos (Optional) & Publish Storefront ---
+  Widget _buildStep3MediaUpload() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
+          child: const Text('STEP 3 OF 3', style: TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+        ),
+        const SizedBox(height: 10),
+        Text('Add photos & videos', style: AppTheme.onDarkTextTheme.displayLarge),
+        const SizedBox(height: 8),
+        Text(
+          'Upload pictures and videos (optional) of the services offered to showcase your experience before publishing your storefront.',
+          style: AppTheme.onDarkTextTheme.bodyMedium,
+        ),
+        const SizedBox(height: 24),
+
+        // Action Buttons for Media
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isUploadingMedia ? null : _pickImages,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppColors.gold),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.add_a_photo_rounded, size: 18, color: AppColors.gold),
+                label: const Text('Add photos', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w700, fontFamily: 'Manrope')),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isUploadingMedia ? null : _pickVideo,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppColors.lineOnDark),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.videocam_rounded, size: 18, color: AppColors.textOnDarkMuted),
+                label: const Text('Add video (opt.)', style: TextStyle(color: AppColors.textOnDark, fontWeight: FontWeight.w700, fontFamily: 'Manrope')),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        if (_isUploadingMedia)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppColors.gold),
+            ),
+          ),
+
+        if (_serviceMedia.isNotEmpty) ...[
+          Text('Attached media (${_serviceMedia.length})', style: AppTheme.onDarkTextTheme.titleSmall),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemCount: _serviceMedia.length,
+            itemBuilder: (_, index) {
+              final media = _serviceMedia[index];
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: AppColors.inkPanel,
+                      child: media.type == 'image'
+                          ? Image.file(File(media.path), width: double.infinity, height: double.infinity, fit: BoxFit.cover)
+                          : const Center(
+                              child: Icon(Icons.play_circle_fill_rounded, color: AppColors.gold, size: 40),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => _removeMedia(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                        child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.inkPanel,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.lineOnDark),
+            ),
+            child: const Center(
+              child: Text(
+                'No photos or videos added yet. You can add them now or publish right away.',
+                style: TextStyle(color: AppColors.textOnDarkMuted, fontSize: 12.5, fontFamily: 'Manrope'),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        PrimaryButton(
+          label: 'Publish storefront',
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                backgroundColor: AppColors.card,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: Text('Storefront published!', style: Theme.of(context).textTheme.headlineSmall),
+                content: const Text(
+                  'Your listing and services are now live on Smart Dzimbabwe. Sign in to your operator dashboard to manage bookings.',
+                  style: TextStyle(fontFamily: 'Manrope', fontSize: 13.5),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const LoginScreen(role: UserRole.operator)),
+                      );
+                    },
+                    child: const Text('Back to sign in', style: TextStyle(color: AppColors.goldDeep, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _processStepItem(String title, {required bool completed, required bool active}) {

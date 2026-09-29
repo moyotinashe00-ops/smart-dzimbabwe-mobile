@@ -17,6 +17,36 @@ class PlaceholderPhoto {
       );
 }
 
+class ServiceMedia {
+  final String id;
+  final String type; // 'image' or 'video'
+  final String path;
+  final String? thumbnailPath;
+
+  ServiceMedia({
+    required this.id,
+    required this.type,
+    required this.path,
+    this.thumbnailPath,
+  });
+
+  factory ServiceMedia.fromJson(Map<String, dynamic> json) {
+    return ServiceMedia(
+      id: json['id'] as String? ?? '',
+      type: json['type'] as String? ?? 'image',
+      path: json['path'] as String? ?? '',
+      thumbnailPath: json['thumbnailPath'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'path': path,
+        'thumbnailPath': thumbnailPath,
+      };
+}
+
 enum ListingStatus { published, draft, pending }
 
 class Listing {
